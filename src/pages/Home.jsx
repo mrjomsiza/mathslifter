@@ -4,14 +4,16 @@ import Navbar from "../components/Navbar";
 import PriceCalculator from "../components/PriceCalculator";
 import Footer from "../components/Footer";
 import { signInWithGoogle } from "../firebase/firebase";
+import { createUser } from "../firebase/firestoreHelpers";
 
 export default function Home() {
   const navigate = useNavigate();
 
   const handleGetStarted = async () => {
     try {
-      await signInWithGoogle();
-      navigate("/choose-role");
+      const result = await signInWithGoogle();
+      await createUser(result.user, { role: "parent" });
+      navigate("/dashboard");
     } catch (error) {
       console.error(error);
       alert("Could not sign in with Google.");

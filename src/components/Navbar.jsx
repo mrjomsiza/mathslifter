@@ -13,8 +13,9 @@ export default function Navbar() {
         await logOut();
         navigate("/");
       } else {
-        await signInWithGoogle();
-        navigate("/choose-role");
+        const result = await signInWithGoogle();
+        await createUser(result.user, { role: "parent" });
+        navigate("/dashboard");
       }
     } catch (error) {
       console.error("Auth error:", error);
@@ -50,7 +51,7 @@ export default function Navbar() {
                   const result = await signInWithGoogle();
                   await createUser(result.user);
                 }
-                navigate("/choose-role");
+                navigate("/dashboard");
               } catch (error) {
                 console.error(error);
                 alert("Could not continue with Google sign-in.");
