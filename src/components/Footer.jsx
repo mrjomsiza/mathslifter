@@ -27,7 +27,7 @@ export default function Footer() {
                   const result = await signInWithGoogle();
                   await createUser(result.user);
                 }
-                navigate("/choose-role");
+                navigate("/dashboard");
                 } catch (error) {
                   console.error(error);
                   alert("Could not continue with Google sign-in.");

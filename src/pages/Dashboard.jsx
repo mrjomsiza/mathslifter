@@ -3,9 +3,10 @@ import { useAuth } from "../context/AuthContext";
 import { logOut } from "../firebase/firebase";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, userDoc } = useAuth();
   const navigate = useNavigate();
-  const role = localStorage.getItem("selectedRole") || "unknown";
+
+  const role = userDoc?.role || localStorage.getItem("selectedRole") || "unknown";
 
   return (
     <div className="grid min-h-screen place-items-center px-4">
@@ -13,11 +14,19 @@ export default function Dashboard() {
         <h1 className="text-3xl font-black">
           {role.charAt(0).toUpperCase() + role.slice(1)} Dashboard
         </h1>
-        <p className="mt-3 text-slate-300">
-          Signed in as: {user?.displayName || user?.email}
-        </p>
+
+        <p className="mt-3 text-slate-300">Signed in as: {user?.displayName || user?.email}</p>
+
+        {role === "student" && userDoc?.parentEmail && (
+          <p className="mt-2 text-slate-300">Linked parent: {userDoc.parentEmail}</p>
+        )}
+
+        {role === "parent" && (
+          <p className="mt-2 text-slate-300">You can now register student accounts linked to your email.</p>
+        )}
+
         <p className="mt-2 text-slate-400">
-          This is a starter dashboard scaffold. Next we can build the real dashboard.
+          This is a starter dashboard scaffold. Next we can build role-specific dashboards.
         </p>
 
         <div className="mt-6 flex flex-wrap justify-center gap-4">
