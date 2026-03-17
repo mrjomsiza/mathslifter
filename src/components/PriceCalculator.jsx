@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { saveParentAndStudentRecords } from "../firebase/firestoreHelpers";
 
 const ONLINE_RATE = 220;
 const IN_PERSON_RATE = 250;
@@ -37,14 +38,17 @@ export default function PriceCalculator() {
   const { user } = useAuth();
   const parentEmail = user?.email || "pending@email.com";
   const [isProcessing, setIsProcessing] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("");
 
   const [students, setStudents] = useState([
     {
       id: crypto.randomUUID(),
       name: "Student 1",
+      email: "",
       mark: 55,
       mode: "online",
-      password: generateStrongPassword(), // ✅ store here
+      password: generateStrongPassword(),
+      paymentStatus: "pending",
     },
   ]);
 
@@ -62,8 +66,11 @@ export default function PriceCalculator() {
       {
         id: crypto.randomUUID(),
         name: `Student ${prev.length + 1}`,
+        email: "",
         mark: 55,
         mode: "online",
+        password: generateStrongPassword(),
+        paymentStatus: "pending",
       },
     ]);
   };
@@ -92,25 +99,55 @@ export default function PriceCalculator() {
 
   const checkoutPayload = useMemo(() => {
     return {
+      parentEmail,
       students: calculatedStudents.map((student) => ({
+        id: student.id,
         name: student.name,
+        email: student.email,
         mark: Number(student.mark),
         sessions: student.sessions,
         rate: student.rate,
         total: student.total,
         mode: student.mode,
-  
-        // ✅ NEW FIELDS
-        email: parentEmail,
-        password: generateStrongPassword(),
+        password: student.password,
+        parentEmail,
+        paymentStatus: student.paymentStatus || "pending",
       })),
-  
+
       totalStudents: calculatedStudents.length,
       totalSessions,
-      amoundDue: grandTotal,
-      status: "pending",
+      amountDue: grandTotal,
+      paymentStatus: "pending",
     };
   }, [calculatedStudents, totalSessions, grandTotal, parentEmail]);
+
+  const handleSaveStudents = async () => {
+    if (!user) {
+      navigate("/signin");
+      return;
+    }
+
+    const hasInvalidStudent = students.some(
+      (student) => !student.name.trim() || !student.email.trim()
+    );
+
+    if (hasInvalidStudent) {
+      setSaveStatus("Please add a name and email for each student.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setSaveStatus("");
+
+    try {
+      const result = await saveParentAndStudentRecords(user, checkoutPayload);
+      setSaveStatus(`Saved ${result.studentCount} student records successfully.`);
+    } catch (error) {
+      setSaveStatus(error.message || "Failed to save student records.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <section id="pricing-calculator" className="mx-auto max-w-7xl px-4 py-16 md:px-6 lg:px-8">
@@ -173,6 +210,19 @@ export default function PriceCalculator() {
                 </div>
 
                 <div>
+                  <label className="mb-2 block font-semibold">Student email</label>
+                  <input
+                    type="email"
+                    value={student.email}
+                    onChange={(e) =>
+                      handleStudentChange(student.id, "email", e.target.value)
+                    }
+                    className="w-full rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-white outline-none"
+                    placeholder="Enter student email"
+                  />
+                </div>
+
+                <div>
                   <label className="mb-2 block font-semibold">
                     Previous year average (%)
                   </label>
@@ -185,6 +235,16 @@ export default function PriceCalculator() {
                       handleStudentChange(student.id, "mark", e.target.value)
                     }
                     className="w-full rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block font-semibold">Generated password</label>
+                  <input
+                    type="text"
+                    value={student.password}
+                    readOnly
+                    className="w-full rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-white/80 outline-none"
                   />
                 </div>
               </div>
@@ -262,12 +322,15 @@ export default function PriceCalculator() {
 
         <div className="mt-6 flex justify-end">
           <button
+            onClick={handleSaveStudents}
             disabled={isProcessing}
             className="rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 px-6 py-3 font-semibold text-white disabled:opacity-60"
           >
-            {isProcessing ? "Preparing..." : "Pay"}
+            {isProcessing ? "Saving..." : "Save students"}
           </button>
         </div>
+
+        {saveStatus && <p className="mt-4 text-sm text-slate-300">{saveStatus}</p>}
 
         <p className="mt-4 text-sm text-slate-400">
           Sign-in will be required before checkout if you are not already authenticated.
