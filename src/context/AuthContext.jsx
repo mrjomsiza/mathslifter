@@ -1,65 +1,36 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
-import { auth, db } from "../firebase/firebase";
-
-const AuthContext = createContext(null);
+import { auth } from "../firebase/firebase";
+import { getUserProfile } from "../firebase/firestoreService";
+import { AuthContext } from "./authContextInstance";
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [userDoc, setUserDoc] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribeUserDoc = null;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user || null);
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser || null);
-
-      if (unsubscribeUserDoc) {
-        unsubscribeUserDoc();
-        unsubscribeUserDoc = null;
-      }
-
-      if (firebaseUser) {
-        const userRef = doc(db, "users", firebaseUser.uid);
-
-        unsubscribeUserDoc = onSnapshot(
-          userRef,
-          (snapshot) => {
-            setUserDoc(snapshot.exists() ? snapshot.data() : null);
-            setLoading(false);
-          },
-          (error) => {
-            console.error("User doc listener error:", error);
-            setUserDoc(null);
-            setLoading(false);
-          }
-        );
-      } else {
-        setUserDoc(null);
+      if (!user) {
+        setUserProfile(null);
         setLoading(false);
+        return;
       }
+
+      const profile = await getUserProfile(user.uid);
+      setUserProfile(profile);
+      setLoading(false);
     });
 
-    return () => {
-      unsubscribeAuth();
-      if (unsubscribeUserDoc) unsubscribeUserDoc();
-    };
+    return unsubscribe;
   }, []);
 
   const value = useMemo(
-    () => ({
-      user,
-      userDoc,
-      loading,
-    }),
-    [user, userDoc, loading]
+    () => ({ currentUser, userProfile, loading, setUserProfile }),
+    [currentUser, userProfile, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

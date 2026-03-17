@@ -1,11 +1,7 @@
 import { initializeApp } from "firebase/app";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-} from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -21,6 +17,9 @@ const firestoreDatabaseId = import.meta.env.VITE_FIRESTORE_DATABASE_ID || "(defa
 
 export const auth = getAuth(app);
 export const db = getFirestore(app, firestoreDatabaseId);
+<<<<<<< codex/plan-next-steps-for-tutoring-app-development-8k74t5
+export const storage = getStorage(app);
+=======
 export const googleProvider = new GoogleAuthProvider();
 
 export async function signInWithGoogle() {
@@ -30,3 +29,4 @@ export async function signInWithGoogle() {
 export async function logOut() {
   return signOut(auth);
 }
+>>>>>>> main

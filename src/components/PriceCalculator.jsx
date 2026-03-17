@@ -1,3 +1,6 @@
+<<<<<<< codex/plan-next-steps-for-tutoring-app-development-8k74t5
+export { default } from "../features/pricing/PricingCalculator";
+=======
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -339,3 +342,4 @@ export default function PriceCalculator() {
     </section>
   );
 }
+>>>>>>> main

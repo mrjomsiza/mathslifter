@@ -1,3 +1,12 @@
+<<<<<<< codex/plan-next-steps-for-tutoring-app-development-8k74t5
+import { createOrMergeUserProfile, getUserProfile, saveStudentPlanSelection } from "./firestoreService";
+
+// Backward-compatible helper names for future cleanup.
+export const createUser = createOrMergeUserProfile;
+export const updateUser = createOrMergeUserProfile;
+export const getUser = getUserProfile;
+export const savePlan = saveStudentPlanSelection;
+=======
 import {
   doc,
   serverTimestamp,
@@ -157,3 +166,4 @@ export async function saveParentAndStudentRecords(parentUser, checkoutData) {
     studentCount: studentDocs.length,
   };
 }
+>>>>>>> main
