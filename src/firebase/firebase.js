@@ -17,4 +17,16 @@ const firestoreDatabaseId = import.meta.env.VITE_FIRESTORE_DATABASE_ID || "(defa
 
 export const auth = getAuth(app);
 export const db = getFirestore(app, firestoreDatabaseId);
+<<<<<<< codex/plan-next-steps-for-tutoring-app-development-8k74t5
 export const storage = getStorage(app);
+=======
+export const googleProvider = new GoogleAuthProvider();
+
+export async function signInWithGoogle() {
+  return signInWithPopup(auth, googleProvider);
+}
+
+export async function logOut() {
+  return signOut(auth);
+}
+>>>>>>> main
